@@ -1,20 +1,16 @@
 # Station
 
-**A local inbox for your AI agents.**
+**A station for your AI agents.**
 
 ---
 
-When you start running scheduled AI agents, something quietly changes. Work starts happening without you. An agent checks your SEO rankings overnight, another monitors your inbox, another pulls together a weekly brief while you're making coffee. It's genuinely useful, and a little bit magic.
+A train station is where things arrive. Trains pull in, you see at a glance what's come in, what's on time, what needs your attention, and then you get on with your day. It's not somewhere you live, it's somewhere you check in.
 
-But then you realise you have no idea what actually happened. Did it run? Did it find anything? Did it hit an error at 3am that's been sitting there ever since? You end up digging through terminal logs, or opening files one by one, or just hoping for the best.
+Station works the same way. Your agents go out and do their work, and Station is where they come back to. When an agent finishes a run, it drops a small update into a local folder and Station picks it up, showing you what it did, what files it created, and whether it needs anything from you before the next run. Things that need your attention sort to the top. Everything else waits quietly until you're ready.
 
-Station is the missing piece. It gives your agents a simple way to report back, and gives you one clean place to see it all.
+It came out of a genuinely frustrating gap. Once you start running scheduled AI agents, work starts happening without you, which is the whole point, but you quickly realise you have no idea what actually happened. Did it run? Did it find anything useful? Did something go wrong at 3am and just sit there? You end up opening log files or checking outputs one by one, which defeats the purpose entirely.
 
-When an agent finishes a run, it drops a small JSON file into a local folder. Station picks it up and shows it as a card: what the agent did, what files it created, and what it needs from you, if anything. Urgent things sort to the top. You tick things off as you go. Nothing leaves your machine.
-
-It runs as a floating widget on your desktop, a standard app window, or a menu bar dropdown, whichever suits how you work. You can switch between modes with a right-click. It starts automatically at login and stays out of your way until something needs your attention.
-
-No database. No cloud. No account. Just files and a local port.
+Station gives your agents a simple, consistent way to report back, and gives you one place to see it all. It runs on your machine, nothing goes anywhere else, and there's no account or database involved, just a local folder your agents write to and a small app that reads it.
 
 ---
 
