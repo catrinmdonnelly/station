@@ -20,6 +20,10 @@ Station runs on your machine, nothing goes anywhere else, and there's no account
 
 ---
 
+![Station screenshot](screenshot.png)
+
+---
+
 ## Install
 
 **Requirements:** macOS · Node.js 18+
@@ -31,7 +35,7 @@ npm install
 npm start
 ```
 
-Station opens in widget mode on first launch and creates a config file at `~/.station/config.json`. Right-click anywhere in the widget to switch to app or menu bar mode.
+Station opens in widget mode on first launch and creates a config file at `~/.station/config.json`. Right-click anywhere in the widget to switch to app or menu bar mode. You can also cycle through four built-in themes — Station red, light, dark, and glass — using the theme button at the top of the widget.
 
 ### Run without a terminal (recommended)
 
@@ -63,6 +67,12 @@ Each agent entry shows up as a card with one of four statuses:
 | `completed` | All finished, ready to dismiss |
 
 You can tick items off, snooze them until 8am tomorrow, open the full brief the agent wrote, or copy a pre-filled message to pick up the conversation in your AI tool. Station refreshes automatically and shows a live badge count in the dock for anything urgent.
+
+---
+
+## Claude Code plugin
+
+If you use Claude Code or Cowork, there's a plugin included in the `plugin/` folder that lets your agents post to Station directly without having to write the JSON themselves. Drop the plugin folder into your Claude plugins directory and it handles the rest.
 
 ---
 
@@ -134,8 +144,8 @@ cat > "$INBOX/my-agent-$(date +%Y-%m-%d-%H%M).json" << EOF
   "timestamp": "$TIMESTAMP",
   "status": "fyi",
   "category": "work",
-  "headline": "Run complete",
-  "summary": "Everything ran as expected.",
+  "headline": "Weekly report ready — 3 items flagged for review",
+  "summary": "Run completed successfully. Found 3 items that need attention before next scheduled run.",
   "actions_needed": [],
   "files_created": []
 }
@@ -187,6 +197,12 @@ rm -rf ~/.station
 ```
 
 Then go to System Settings → General → Login Items and remove Station if it's still listed. Your inbox folder is left untouched.
+
+---
+
+## Built by
+
+Station was built by [Catrin Donnelly](https://github.com/catrindonnelly), a solo founder who kept setting up agents and having no idea what they actually got up to. If something isn't working or you have an idea, open an issue and she'll take a look.
 
 ---
 
