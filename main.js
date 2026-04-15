@@ -6,6 +6,8 @@ const os    = require('os');
 const fs    = require('fs');
 const { startServer } = require('./server.js');
 
+app.name = 'Station';
+
 // ── Config ─────────────────────────────────────────────────────────────────
 
 const CONFIG_PATH = path.join(os.homedir(), '.station', 'config.json');
