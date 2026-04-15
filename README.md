@@ -2,6 +2,11 @@
 
 **A station for your AI agents.**
 
+![macOS](https://img.shields.io/badge/macOS-000000?style=flat&logo=apple&logoColor=white)
+![Node](https://img.shields.io/badge/Node.js-18+-339933?style=flat&logo=node.js&logoColor=white)
+![Licence](https://img.shields.io/badge/licence-MIT-E63535?style=flat)
+![Works with](https://img.shields.io/badge/works%20with-any%20AI%20agent-6366f1?style=flat)
+
 ---
 
 A station is a fixed point that things return to. Somewhere you hold your position, stay informed, and decide what happens next. In a world where agents go out and do the work, Station is where they come back to report in.
@@ -20,7 +25,7 @@ Station runs on your machine, nothing goes anywhere else, and there's no account
 
 ---
 
-![Station screenshot](screenshot.png)
+![Station demo](demo.gif)
 
 ---
 
