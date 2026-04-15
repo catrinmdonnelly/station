@@ -202,7 +202,7 @@ Then go to System Settings → General → Login Items and remove Station if it'
 
 ## Built by
 
-Station was built by [Catrin Donnelly](https://github.com/catrindonnelly), a solo founder who kept setting up agents and having no idea what they actually got up to. If something isn't working or you have an idea, open an issue and she'll take a look.
+I'm [Catrin](https://github.com/catrindonnelly), a solo founder who kept setting up agents and having no idea what they actually got up to. Station is what I built to fix that. If something isn't working or you have an idea, open an issue and I'll take a look.
 
 ---
 
