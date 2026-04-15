@@ -32,7 +32,7 @@ Station runs on your machine, nothing goes anywhere else, and there's no account
 **Requirements:** macOS · Node.js 18+
 
 ```bash
-git clone https://github.com/catrindonnelly/station.git
+git clone https://github.com/catrinmdonnelly/station.git
 cd station
 npm install
 npm start
@@ -205,7 +205,7 @@ Then go to System Settings → General → Login Items and remove Station if it'
 
 ## Built by
 
-I'm [Catrin](https://github.com/catrindonnelly), a solo founder who's been building with AI and wanted to share this along the way. Station is something I use every day to keep across what my agents are up to, and it felt worth putting out in case it's useful for you too. If something isn't working, or you have ideas for where it could go, I'd genuinely love to hear them — open an issue or find me on Twitter at [@catrinMdonnelly](https://twitter.com/catrinMdonnelly).
+I'm [Catrin](https://github.com/catrinmdonnelly), a solo founder who's been building with AI and wanted to share this along the way. Station is something I use every day to keep across what my agents are up to, and it felt worth putting out in case it's useful for you too. If something isn't working, or you have ideas for where it could go, I'd genuinely love to hear them — open an issue or find me on Twitter at [@catrinMdonnelly](https://twitter.com/catrinMdonnelly).
 
 ---
 
