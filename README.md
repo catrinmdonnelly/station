@@ -1,29 +1,24 @@
 # Station
 
-**A lightweight local inbox for your AI agents.**
-
-Station runs quietly in the background and shows you what your scheduled agents have been up to — what they finished, what files they created, and where they need your input. It can run as a floating desktop widget (always on top, with real macOS frosted glass) or as a menu bar app.
+**A local inbox for your AI agents.**
 
 ---
 
-## What it does
+When you start running scheduled AI agents, something quietly changes. Work starts happening without you. An agent checks your SEO rankings overnight, another monitors your inbox, another pulls together a weekly brief while you're making coffee. It's genuinely useful, and a little bit magic.
 
-When you run scheduled Claude agents (via Claude Code, Cowork, or your own scripts), they write small JSON entries to a local inbox folder. Station reads those entries and shows them as a clean to-do list:
+But then you realise you have no idea what actually happened. Did it run? Did it find anything? Did it hit an error at 3am that's been sitting there ever since? You end up digging through terminal logs, or opening files one by one, or just hoping for the best.
 
-- **Error** — something failed and needs your attention (sorts to top, shown in red)
-- **Your call** — the agent is waiting on you
-- **Heads up** — work done, nothing urgent
-- **Sorted** — completed, ready to dismiss
+Station is the missing piece. It gives your agents a simple way to report back, and gives you one clean place to see it all.
 
-You can tick items off, snooze them until 8am tomorrow, open the full brief the agent wrote, or copy a pre-filled message to continue the conversation in your AI tool. Station auto-refreshes every 2 minutes and shows a live badge count for urgent items.
+When an agent finishes a run, it drops a small JSON file into a local folder. Station picks it up and shows it as a card: what the agent did, what files it created, and what it needs from you, if anything. Urgent things sort to the top. You tick things off as you go. Nothing leaves your machine.
+
+It runs as a floating widget on your desktop, a standard app window, or a menu bar dropdown, whichever suits how you work. You can switch between modes with a right-click. It starts automatically at login and stays out of your way until something needs your attention.
+
+No database. No cloud. No account. Just files and a local port.
 
 ---
 
 ## Install
-
-### Option A — Electron app (recommended)
-
-Electron gives you a proper native app: a floating desktop widget, a dock badge for urgent items, system notifications for errors and actions needed, and an optional menu bar mode.
 
 **Requirements:** macOS · Node.js 18+
 
@@ -34,26 +29,19 @@ npm install
 npm start
 ```
 
-On first launch, Station creates `~/.station/config.json` and opens in widget mode — a small frameless window that sits on your desktop.
+Station opens in widget mode on first launch and creates a config file at `~/.station/config.json`. Right-click anywhere in the widget to switch to app or menu bar mode.
 
-**Switch to menu bar mode:** right-click the widget and choose "Switch to menu bar". The app moves to your macOS menu bar and opens as a dropdown on click.
+### Run without a terminal (recommended)
 
-**Switch back:** right-click the tray icon and choose "Switch to widget".
-
-### Option B — Run as a background app (no terminal)
-
-To have Station start automatically at login and run without a terminal window:
+To have Station start automatically at login and run in the background without keeping a terminal window open:
 
 ```bash
-git clone https://github.com/catrindonnelly/station.git
-cd station
-npm install
 bash setup.sh
 ```
 
-`setup.sh` creates `~/Applications/Station.app` and adds it as a macOS Login Item. Station will start automatically every time you log in. You can close the terminal immediately after.
+This creates `~/Applications/Station.app` and adds it as a macOS Login Item. You can close the terminal straight after and Station will be there every time you log in.
 
-**Custom inbox path:**
+Custom inbox path:
 
 ```bash
 bash setup.sh /path/to/your/inbox
@@ -61,34 +49,24 @@ bash setup.sh /path/to/your/inbox
 
 ---
 
-## Configuration
+## What you see
 
-Config lives at `~/.station/config.json`:
+Each agent entry shows up as a card with one of four statuses:
 
-```json
-{
-  "inbox": "~/Documents/Claude/agent-inbox",
-  "port": 2626,
-  "tabs": ["Work", "Personal"],
-  "mode": "widget"
-}
-```
+| Status | What it means |
+|--------|--------------|
+| `error` | Something failed and needs your attention (sorts to top, shown in red) |
+| `needs_input` | The agent is blocked and waiting on you |
+| `fyi` | Work done, nothing urgent |
+| `completed` | All finished, ready to dismiss |
 
-| Key | Default | Description |
-|-----|---------|-------------|
-| `inbox` | `~/Documents/Claude/agent-inbox` | Folder Station watches for JSON entries |
-| `port` | `2626` | Local port for the HTTP server |
-| `tabs` | `["Work", "Personal"]` | Tab labels (maps to `category` in your JSON files) |
-| `mode` | `widget` | `widget`, `app`, or `menubar` (Electron only) |
-| `width` | `320` | Widget width in pixels (saved automatically on resize) |
-| `height` | `600` | Widget height in pixels |
-| `x` / `y` | — | Widget position (saved automatically on drag) |
+You can tick items off, snooze them until 8am tomorrow, open the full brief the agent wrote, or copy a pre-filled message to pick up the conversation in your AI tool. Station refreshes automatically and shows a live badge count in the dock for anything urgent.
 
 ---
 
 ## How agents post to Station
 
-At the end of any agent run, write a JSON file to the inbox folder:
+At the end of a run, your agent writes a JSON file to the inbox folder:
 
 ```json
 {
@@ -150,32 +128,49 @@ EOF
 
 ---
 
+## Configuration
+
+Config lives at `~/.station/config.json`:
+
+```json
+{
+  "inbox": "~/Documents/Claude/agent-inbox",
+  "port": 2626,
+  "tabs": ["Work", "Personal"],
+  "mode": "widget"
+}
+```
+
+| Key | Default | Description |
+|-----|---------|-------------|
+| `inbox` | `~/Documents/Claude/agent-inbox` | Folder Station watches for JSON entries |
+| `port` | `2626` | Local port for the HTTP server |
+| `tabs` | `["Work", "Personal"]` | Tab labels (maps to `category` in your JSON files) |
+| `mode` | `widget` | `widget`, `app`, or `menubar` |
+| `width` | `320` | Widget width in pixels (saved automatically on resize) |
+| `height` | `600` | Widget height in pixels |
+| `x` / `y` | — | Widget position (saved automatically on drag) |
+
+---
+
 ## How it works
 
-Station is intentionally simple:
+Station is a Node.js HTTP server that reads JSON files from your inbox folder and renders them as HTML. In Electron mode, `main.js` wraps the server in a native window with a live dock badge and system notifications, watching the inbox folder with `fs.watch()` so updates appear immediately. `setup.sh` creates a native macOS app wrapper and Login Item so the whole thing starts on login without a terminal.
 
-- A Node.js HTTP server reads JSON files from your inbox folder and serves them as HTML
-- In Electron mode, `main.js` wraps the server in a native window with a live dock badge and system notifications via `fs.watch()`
-- `setup.sh` creates a native macOS app wrapper and Login Item so Station starts on login without a terminal
-- No database, no cloud, no accounts — just files and a local port
-
-Agents write files in, Station reads them out, dismissed items move to `archived/`, snoozed items move to `snoozed/` and return the next morning.
+Agents write files in, Station reads them out. Dismissed items move to `archived/`, snoozed items move to `snoozed/` and return the next morning.
 
 ---
 
 ## Uninstall
 
-**Electron:** just delete the app / folder.
-
-**LaunchAgent (browser mode):**
+Delete the station folder. If you ran `setup.sh`, also remove the app and login item:
 
 ```bash
-launchctl unload ~/Library/LaunchAgents/com.station.server.plist
-rm ~/Library/LaunchAgents/com.station.server.plist
+rm -rf ~/Applications/Station.app
 rm -rf ~/.station
 ```
 
-Your inbox folder is left untouched.
+Then go to System Settings → General → Login Items and remove Station if it's still listed. Your inbox folder is left untouched.
 
 ---
 
