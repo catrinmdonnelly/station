@@ -4,9 +4,9 @@
 
 ---
 
-A train station is where things arrive. Trains pull in, you see at a glance what's come in, what's on time, what needs your attention, and then you get on with your day. It's not somewhere you live, it's somewhere you check in.
+A station is a fixed point that things return to. Somewhere you hold your position, stay informed, and decide what happens next. Your agents go out into the world and do their work, and this is where they come back to report in.
 
-Station works the same way. Your agents go out and do their work, and Station is where they come back to. When an agent finishes a run, it drops a small update into a local folder and Station picks it up, showing you what it did, what files it created, and whether it needs anything from you before the next run. Things that need your attention sort to the top. Everything else waits quietly until you're ready.
+When an agent finishes a run, it drops a small update into a local folder and Station picks it up, showing you what it did, what files it created, and whether it needs anything from you before the next run. Things that need your attention sort to the top. Everything else waits quietly until you're ready.
 
 It came out of a genuinely frustrating gap. Once you start running scheduled AI agents, work starts happening without you, which is the whole point, but you quickly realise you have no idea what actually happened. Did it run? Did it find anything useful? Did something go wrong at 3am and just sit there? You end up opening log files or checking outputs one by one, which defeats the purpose entirely.
 
