@@ -8,9 +8,13 @@ A station is a fixed point that things return to. Somewhere you hold your positi
 
 When an agent finishes a run, it drops a small update into a local folder and Station picks it up, showing you what it did, what files it created, and whether it needs anything from you before the next run. Things that need your attention sort to the top. Everything else waits quietly until you're ready.
 
-It came out of a genuinely frustrating gap. Once you start running scheduled AI agents, work starts happening without you, which is the whole point, but you quickly realise you have no idea what actually happened. Did it run? Did it find anything useful? Did something go wrong at 3am and just sit there? You end up opening log files or checking outputs one by one, which defeats the purpose entirely.
+It came out of a genuinely frustrating gap. Once you start running scheduled AI agents, work starts happening without you, which is the whole point, but you quickly realise you have no idea what actually happened. Did it run? Did it find anything useful? Did something go wrong at 3am and just sat there? You end up opening log files or checking outputs one by one, which defeats the purpose entirely.
 
-Station gives your agents a simple, consistent way to report back, and gives you one place to see it all. It runs on your machine, nothing goes anywhere else, and there's no account or database involved, just a local folder your agents write to and a small app that reads it.
+Station was built by someone who is technical enough to set agents up, but wanted something visual and simple to stay across what they were actually doing. Not a dashboard full of metrics, just a clear, quiet widget that sits in the background and speaks up when it needs to. The kind of thing you barely notice until something needs your attention, and then it's right there.
+
+It works with any AI agent that can write a file, whether that's Claude, ChatGPT, a custom script, or anything else. When something needs following up, the Discuss button copies a pre-filled message to your clipboard so you can paste it straight into whichever AI tool you use and pick up where the agent left off.
+
+Station runs on your machine, nothing goes anywhere else, and there's no account or database involved, just a local folder your agents write to and a small app that reads it.
 
 ---
 
