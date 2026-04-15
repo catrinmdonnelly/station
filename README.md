@@ -10,6 +10,8 @@ When an agent finishes a run, it drops a small update into a local folder and St
 
 It came out of a genuinely frustrating gap. Once you start running scheduled AI agents, work starts happening without you, which is the whole point, but you quickly realise you have no idea what actually happened. Did it run? Did it find anything useful? Did something go wrong at 3am and just sat there? You end up opening log files or checking outputs one by one, which defeats the purpose entirely.
 
+And agents aren't just for work. You might have a personal assistant checking in on things outside of office hours, a reminder agent keeping track of something you're waiting on, or a home project that's ticking away in the background. Station keeps all of it in one place, with separate tabs for work and personal so nothing bleeds into the wrong part of your day.
+
 Station was built by someone who is technical enough to set agents up, but wanted something visual and simple to stay across what they were actually doing. Not a dashboard full of metrics, just a clear, quiet widget that sits in the background and speaks up when it needs to. The kind of thing you barely notice until something needs your attention, and then it's right there.
 
 It works with any AI agent that can write a file, whether that's Claude, ChatGPT, a custom script, or anything else. When something needs following up, the Discuss button copies a pre-filled message to your clipboard so you can paste it straight into whichever AI tool you use and pick up where the agent left off.
