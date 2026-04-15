@@ -2,6 +2,8 @@
 
 **A station for your AI agents.**
 
+![Station screenshot](screenshot.png)
+
 ![macOS](https://img.shields.io/badge/macOS-000000?style=flat&logo=apple&logoColor=white)
 ![Node](https://img.shields.io/badge/Node.js-18+-339933?style=flat&logo=node.js&logoColor=white)
 ![Licence](https://img.shields.io/badge/licence-MIT-E63535?style=flat)
@@ -22,10 +24,6 @@ Station was built by someone who is technical enough to set agents up, but wante
 It works with any AI agent that can write a file, whether that's Claude, ChatGPT, a custom script, or anything else. When something needs following up, the Discuss button copies a pre-filled message to your clipboard so you can paste it straight into whichever AI tool you use and pick up where the agent left off.
 
 Station runs on your machine, nothing goes anywhere else, and there's no account or database involved, just a local folder your agents write to and a small app that reads it.
-
----
-
-![Station screenshot](screenshot.png)
 
 ---
 
