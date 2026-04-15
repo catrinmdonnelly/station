@@ -23,7 +23,7 @@ You can tick items off, snooze them until 8am tomorrow, open the full brief the 
 
 ### Option A — Electron app (recommended)
 
-Electron gives you a proper native app: a floating widget with real macOS frosted glass, an always-on-top window that sits on your desktop, a dock badge for urgent items, and an optional menu bar mode.
+Electron gives you a proper native app: a floating desktop widget, a dock badge for urgent items, system notifications for errors and actions needed, and an optional menu bar mode.
 
 **Requirements:** macOS · Node.js 18+
 
@@ -34,23 +34,24 @@ npm install
 npm start
 ```
 
-On first launch, Station creates `~/.station/config.json` and opens in widget mode — a small frameless window with frosted glass that floats above your other apps.
+On first launch, Station creates `~/.station/config.json` and opens in widget mode — a small frameless window that sits on your desktop.
 
 **Switch to menu bar mode:** right-click the widget and choose "Switch to menu bar". The app moves to your macOS menu bar and opens as a dropdown on click.
 
 **Switch back:** right-click the tray icon and choose "Switch to widget".
 
-### Option B — Browser / LaunchAgent
+### Option B — Run as a background app (no terminal)
 
-If you'd rather not use Electron, Station can also run as a headless Node server and be viewed in any browser.
+To have Station start automatically at login and run without a terminal window:
 
 ```bash
 git clone https://github.com/catrindonnelly/station.git
 cd station
+npm install
 bash setup.sh
 ```
 
-Station starts immediately and opens at `http://localhost:2626`. The setup script installs a macOS LaunchAgent so it restarts automatically on login. To install as a Chrome desktop app: open the Chrome menu (⋮) → Cast, save and share → Install Station.
+`setup.sh` creates `~/Applications/Station.app` and adds it as a macOS Login Item. Station will start automatically every time you log in. You can close the terminal immediately after.
 
 **Custom inbox path:**
 
@@ -78,7 +79,7 @@ Config lives at `~/.station/config.json`:
 | `inbox` | `~/Documents/Claude/agent-inbox` | Folder Station watches for JSON entries |
 | `port` | `2626` | Local port for the HTTP server |
 | `tabs` | `["Work", "Personal"]` | Tab labels (maps to `category` in your JSON files) |
-| `mode` | `widget` | `widget` or `menubar` (Electron only) |
+| `mode` | `widget` | `widget`, `app`, or `menubar` (Electron only) |
 | `width` | `320` | Widget width in pixels (saved automatically on resize) |
 | `height` | `600` | Widget height in pixels |
 | `x` / `y` | — | Widget position (saved automatically on drag) |
@@ -154,8 +155,8 @@ EOF
 Station is intentionally simple:
 
 - A Node.js HTTP server reads JSON files from your inbox folder and serves them as HTML
-- In Electron mode, `main.js` wraps the server in a native window with `alwaysOnTop`, `vibrancy`, and a dock badge that updates live via `fs.watch()`
-- In browser mode, a LaunchAgent keeps the server running in the background
+- In Electron mode, `main.js` wraps the server in a native window with a live dock badge and system notifications via `fs.watch()`
+- `setup.sh` creates a native macOS app wrapper and Login Item so Station starts on login without a terminal
 - No database, no cloud, no accounts — just files and a local port
 
 Agents write files in, Station reads them out, dismissed items move to `archived/`, snoozed items move to `snoozed/` and return the next morning.
