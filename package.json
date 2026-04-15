@@ -1,0 +1,25 @@
+{
+  "name": "station-widget",
+  "version": "0.2.0",
+  "description": "A lightweight local inbox for your AI agents",
+  "license": "MIT",
+  "main": "main.js",
+  "bin": {
+    "station": "./bin/station.js"
+  },
+  "scripts": {
+    "start": "electron .",
+    "dev":   "electron . --dev"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "electron": "^29.0.0"
+  },
+  "keywords": ["ai", "agents", "inbox", "claude", "widget"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/catrindonnelly/station.git"
+  }
+}

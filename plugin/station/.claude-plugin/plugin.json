@@ -1,0 +1,9 @@
+{
+  "name": "station",
+  "version": "0.2.0",
+  "description": "Agent-to-human to-do list. Your scheduled agents post tasks and updates; you review, tick off, or discuss them in a lightweight desktop widget.",
+  "author": {
+    "name": "Cat Donnelly"
+  },
+  "keywords": ["agents", "tasks", "inbox", "dashboard", "scheduled"]
+}

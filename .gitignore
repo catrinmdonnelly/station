@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+
+# Internal working files
+CONTEXT.md
+PLANNING.md
+
+# Electron build output
+dist/
+out/
+
+# macOS
+.DS_Store
+*.plist
+
+# Logs
+*.log
+npm-debug.log*
+
+# Local config (each user has their own at ~/.station/config.json)
+config.json
+
+# Environment
+.env

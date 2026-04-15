@@ -1,0 +1,9 @@
+{
+  "name": "Station",
+  "short_name": "Station",
+  "description": "A lightweight local inbox for your AI agents",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#E63535"
+}
