@@ -90,6 +90,20 @@ At the end of a run, your agent writes a JSON file to the inbox folder:
 
 **File naming:** `[agent-name]-[YYYY-MM-DD-HHMM].json`
 
+### Getting the most out of it
+
+Station becomes genuinely useful when your agents are well identified. A few things that make a real difference in practice:
+
+`agent_display` is what shows on the card, so give it a proper human-readable name rather than leaving it as the machine name. "SEO Monitor" or "Weekly Brief" reads much better than "seo-monitor-v2".
+
+`headline` is the one line you'll read when you're scanning Station quickly, so make it specific enough to tell you whether you actually need to do something. "Run complete" tells you nothing. "Three pages dropped out of top 10, manual review needed" tells you exactly what you're dealing with.
+
+`summary` is where the agent should give you enough context to act without having to open the full brief. Think of it as the agent explaining itself to you in a couple of sentences.
+
+`category` routes entries to the right tab, so if you're running both work and personal agents, make sure each one sets this correctly. Anything without a category defaults to the Work tab.
+
+The more clearly your agents identify themselves and describe what they did, the more Station feels like a proper briefing rather than a list of log entries.
+
 ### Status values
 
 | Status | When to use |
