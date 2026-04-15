@@ -200,7 +200,7 @@ Then go to System Settings → General → Login Items and remove Station if it'
 
 ## Built by
 
-I'm [Catrin](https://github.com/catrinmdonnelly), a solo founder who's been building with AI and wanted to share this along the way. Station is something I use every day to keep across what my agents are up to, and it felt worth putting out in case it's useful for you too. If something isn't working, or you have ideas for where it could go, I'd genuinely love to hear them — open an issue or find me on Twitter at [@catrinMdonnelly](https://twitter.com/catrinMdonnelly).
+I'm [Catrin](https://github.com/catrinmdonnelly), a solo founder who's building with AI and wanted to share this along the way. Station is something I use every day to keep across what my agents are up to, and it felt worth putting out in case it's useful for you too. This is my first open source project, so any problems please let me know [@catrinMdonnelly](https://twitter.com/catrinMdonnelly).
 
 ---
 
