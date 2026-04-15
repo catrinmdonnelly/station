@@ -4,7 +4,7 @@
 
 ---
 
-A station is a fixed point that things return to. Somewhere you hold your position, stay informed, and decide what happens next. Your agents go out into the world and do their work, and this is where they come back to report in.
+A station is a fixed point that things return to. Somewhere you hold your position, stay informed, and decide what happens next. In a world where agents go out and do the work, Station is where they come back to report in.
 
 When an agent finishes a run, it drops a small update into a local folder and Station picks it up, showing you what it did, what files it created, and whether it needs anything from you before the next run. Things that need your attention sort to the top. Everything else waits quietly until you're ready.
 
