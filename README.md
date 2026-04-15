@@ -25,7 +25,7 @@ Station runs on your machine, nothing goes anywhere else, and there's no account
 
 ---
 
-![Station demo](demo.gif)
+![Station screenshot](screenshot.png)
 
 ---
 
