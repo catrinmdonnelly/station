@@ -59,7 +59,13 @@ function snoozeItem(inbox, snoozed, id) {
 function checkSnoozed(inbox, snoozed) {
   if (!fs.existsSync(snoozed)) return;
   const now = new Date();
-  for (const file of fs.readdirSync(snoozed)) {
+  let files;
+  try {
+    files = fs.readdirSync(snoozed);
+  } catch (e) {
+    return;
+  }
+  for (const file of files) {
     if (!file.endsWith('.json')) continue;
     try {
       const item  = JSON.parse(fs.readFileSync(path.join(snoozed, file), 'utf8'));
