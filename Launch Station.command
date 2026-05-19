@@ -1,6 +1,7 @@
 #!/bin/bash
 # Double-click this file in Finder to open Station
 
+export PATH=/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin
 STATION_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ELECTRON="$STATION_DIR/node_modules/.bin/electron"
 LOG="$HOME/.station/station.log"

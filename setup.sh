@@ -66,7 +66,7 @@ osascript -e 'tell application "Station" to quit' 2>/dev/null || true
 sleep 0.5
 
 osacompile -o "$APP_PATH" << EOF
-do shell script "nohup '$ELECTRON' '$SCRIPT_DIR' > '$STATION_DIR/station.log' 2>&1 &"
+do shell script "export PATH=/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin; nohup '$ELECTRON' '$SCRIPT_DIR' > '$STATION_DIR/station.log' 2>&1 &"
 EOF
 
 # Give it a moment to write
