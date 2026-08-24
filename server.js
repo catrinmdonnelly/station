@@ -96,6 +96,85 @@ function archiveAllDone(inbox, archive) {
   return count;
 }
 
+// ── Tabs ───────────────────────────────────────────────────────────────────
+
+const CONFIG_PATH = path.join(os.homedir(), '.station', 'config.json');
+
+// Rewrites the category on every card sitting in one tab so it lands in
+// another. Used when a tab is renamed or deleted, otherwise its cards would
+// be orphaned the moment the tab they belong to stops existing.
+function moveCategory(dirs, from, to) {
+  let moved = 0;
+  for (const dir of dirs) {
+    if (!fs.existsSync(dir)) continue;
+    for (const file of fs.readdirSync(dir)) {
+      if (!file.endsWith('.json')) continue;
+      const full = path.join(dir, file);
+      try {
+        const item = JSON.parse(fs.readFileSync(full, 'utf8'));
+        if (tabId(item.category || '') !== from) continue;
+        item.category = to;
+        fs.writeFileSync(full, JSON.stringify(item, null, 2));
+        moved++;
+      } catch (e) {}
+    }
+  }
+  return moved;
+}
+
+function updateTabs(config, dirs, names, renames) {
+  if (!Array.isArray(names) || names.length === 0) {
+    return { ok: false, error: 'Station needs at least one tab' };
+  }
+  if (names.length > 12) {
+    return { ok: false, error: 'That is more tabs than will fit' };
+  }
+
+  const clean = [];
+  for (const raw of names) {
+    const name = String(raw == null ? '' : raw).trim();
+    if (!name)            return { ok: false, error: 'Tab names cannot be empty' };
+    if (name.length > 24) return { ok: false, error: 'Tab names must be 24 characters or fewer' };
+    if (!tabId(name))     return { ok: false, error: `"${name}" does not make a usable tab name` };
+    clean.push(name);
+  }
+
+  const newIds = clean.map(tabId);
+  if (new Set(newIds).size !== newIds.length) {
+    return { ok: false, error: 'Two tabs would end up with the same name' };
+  }
+
+  const oldNames = config.tabs || ['Work', 'Personal'];
+  const oldIds   = oldNames.map(tabId);
+
+  // Renames first, so a renamed tab keeps its cards.
+  const renamed = new Set();
+  for (const [fromId, toName] of Object.entries(renames || {})) {
+    const toId = tabId(toName);
+    if (!oldIds.includes(fromId) || !newIds.includes(toId) || fromId === toId) continue;
+    moveCategory(dirs, fromId, toId);
+    renamed.add(fromId);
+  }
+
+  // Anything left that no longer exists hands its cards to the first tab.
+  for (const oldId of oldIds) {
+    if (newIds.includes(oldId) || renamed.has(oldId)) continue;
+    moveCategory(dirs, oldId, newIds[0]);
+  }
+
+  let stored = {};
+  try {
+    if (fs.existsSync(CONFIG_PATH)) stored = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
+  } catch (e) {}
+  stored.tabs = clean;
+  fs.mkdirSync(path.dirname(CONFIG_PATH), { recursive: true });
+  fs.writeFileSync(CONFIG_PATH, JSON.stringify(stored, null, 2));
+
+  // Keep the running server in step without needing a restart.
+  config.tabs = clean;
+  return { ok: true, tabs: clean };
+}
+
 // ── Interactive card response ─────────────────────────────────────────────
 
 function recordResponse(inbox, cardId, entryId, values) {
@@ -271,27 +350,46 @@ function esc(str) {
     .replace(/'/g, '&#39;');
 }
 
+// A tab's id is what agents put in "category". Kept simple on purpose, so
+// a tab called "Wylfa Hardtops" is category "wylfa-hardtops".
+// Letters and numbers survive, everything else becomes a hyphen, so a tab
+// name can never break out of the id or the inline onclick. Accented and
+// Welsh letters are kept, so "Llŷn" stays readable as a category.
+function tabId(name) {
+  return String(name || '')
+    .toLowerCase()
+    .trim()
+    .replace(/[^\p{L}\p{N}]+/gu, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 function renderPage(items, config) {
   const tabs       = config.tabs || ['Work', 'Personal'];
-  const tabIds     = tabs.map(t => t.toLowerCase().replace(/\s+/g, '-'));
+  const tabIds     = tabs.map(tabId);
   const defaultTab = tabIds[0];
+  const knownTabs  = new Set(tabIds);
+
+  // A card whose category matches no tab belongs in the first tab. Without
+  // this it gets counted there but filtered into nothing, so it disappears.
+  const catOf = item => {
+    const raw = tabId(item.category || defaultTab);
+    return knownTabs.has(raw) ? raw : defaultTab;
+  };
 
   // Tab counts
   const counts = {};
   tabIds.forEach(t => counts[t] = 0);
-  for (const item of items) {
-    const cat = item.category || defaultTab;
-    if (counts[cat] !== undefined) counts[cat]++;
-    else counts[defaultTab]++;
-  }
+  for (const item of items) counts[catOf(item)]++;
 
   const tabsHtml = tabs.map((name, i) => {
     const tid    = tabIds[i];
     const c      = counts[tid] || 0;
-    const label  = c ? `${name} (${c})` : name;
+    const label  = c ? `${esc(name)} (${c})` : esc(name);
     const active = i === 0 ? ' active' : '';
-    return `<span class="tab${active}" id="tab-${tid}" onclick="switchTab('${tid}')">${label}</span>`;
-  }).join('');
+    return `<span class="tab${active}" id="tab-${tid}" data-name="${esc(name)}" ` +
+           `onclick="switchTab('${tid}')" ondblclick="editTab(event,'${tid}')" ` +
+           `title="Double-click to rename">${label}</span>`;
+  }).join('') + `<span class="tab tab-add" onclick="addTab(event)" title="Add a tab">+</span>`;
 
   function renderInteractiveCard(item) {
     const iid       = item._id;
@@ -299,7 +397,7 @@ function renderPage(items, config) {
     const headline  = item.headline || '';
     const summary   = item.summary || '';
     const accent    = item.accent || (item.interactive && item.interactive.accent) || '#E63535';
-    const cat       = item.category || defaultTab;
+    const cat       = catOf(item);
     const ts        = formatTime(item.timestamp);
     const cardId    = (item.interactive && item.interactive.card_id) || iid;
     const isResponded = item.status === 'responded';
@@ -377,7 +475,7 @@ function renderPage(items, config) {
 
     const agent    = item.agent_display || item.agent || '';
     const iid      = item._id;
-    const cat      = item.category || defaultTab;
+    const cat      = catOf(item);
     const ts       = formatTime(item.timestamp);
     const headline = item.headline || '';
     const summ     = item.summary || '';
@@ -581,6 +679,11 @@ function renderPage(items, config) {
     cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;
     transition:color 0.15s;white-space:nowrap}
   .tab.active{color:var(--text);border-bottom-color:var(--accent)}
+  .tab-add{color:var(--subtle);opacity:0.5;font-weight:400;padding-left:8px}
+  .tab-add:hover{opacity:1;color:var(--accent)}
+  .tab-input{font-size:11px;font-weight:600;font-family:inherit;color:var(--text);
+    background:transparent;border:none;border-bottom:2px solid var(--accent);
+    padding:7px 2px 4px;margin-bottom:-1px;width:70px;outline:none}
 
   /* ── List ── */
   .list{padding:8px 8px 16px;display:flex;flex-direction:column;gap:4px;
@@ -784,6 +887,69 @@ function renderPage(items, config) {
     checkEmpty();
   }
 
+  // ── Editing tabs ───────────────────────────────────────────────────────────
+  // Electron has no window.prompt, so naming happens in an inline input.
+
+  function saveTabs(names,renames){
+    return fetch('/api/tabs',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({tabs:names,renames:renames||{}})})
+      .then(function(r){return r.json();})
+      .then(function(d){
+        if(d && d.ok){location.reload();}
+        else{alert((d && d.error) || 'Could not save tabs');}
+      })
+      .catch(function(){alert('Could not save tabs');});
+  }
+
+  function askForName(anchor,current,onDone){
+    var input=document.createElement('input');
+    input.type='text'; input.className='tab-input';
+    input.value=current||''; input.maxLength=24;
+    input.placeholder='Tab name';
+    anchor.replaceWith(input);
+    input.focus(); input.select();
+    var settled=false;
+    function finish(save){
+      if(settled)return; settled=true;
+      var v=input.value.trim();
+      if(save){onDone(v);} else {location.reload();}
+    }
+    input.addEventListener('keydown',function(e){
+      if(e.key==='Enter'){e.preventDefault();finish(true);}
+      if(e.key==='Escape'){e.preventDefault();finish(false);}
+    });
+    input.addEventListener('blur',function(){finish(false);});
+  }
+
+  function addTab(e){
+    e.stopPropagation();
+    askForName(e.target,'',function(name){
+      if(!name){location.reload();return;}
+      saveTabs(TAB_NAMES.concat([name]));
+    });
+  }
+
+  function editTab(e,tid){
+    e.stopPropagation();
+    var el=e.target;
+    var i=TAB_IDS.indexOf(tid);
+    if(i<0)return;
+    askForName(el,el.dataset.name,function(name){
+      var next=TAB_NAMES.slice();
+      var renames={};
+      if(!name){
+        if(next.length<2){alert('Station needs at least one tab');location.reload();return;}
+        if(!confirm('Delete the "'+TAB_NAMES[i]+'" tab? Its cards move to "'+
+                    TAB_NAMES[i===0?1:0]+'".')){location.reload();return;}
+        next.splice(i,1);
+      } else {
+        next[i]=name;
+        renames[tid]=name;
+      }
+      saveTabs(next,renames);
+    });
+  }
+
   // ── Card actions ───────────────────────────────────────────────────────────
   function toggle(id){
     var d=document.getElementById('detail-'+id),m=document.getElementById('more-'+id);
@@ -944,6 +1110,12 @@ function startServer(config, onReady) {
           const ok = dismissItem(inbox, archive, data.id || '');
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ ok }));
+          return;
+        }
+        if (url === '/api/tabs') {
+          const result = updateTabs(config, [inbox, snoozed], data.tabs, data.renames);
+          res.writeHead(result.ok ? 200 : 400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(result));
           return;
         }
         if (url === '/api/snooze') {

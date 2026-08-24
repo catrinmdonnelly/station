@@ -30,9 +30,14 @@ Example: `steelspec-monetisation-agent-2026-04-07-0906.json`
 - `error`: something failed and needs attention (shows red, sorted to top)
 
 ## Category values
+The category is the tab name, lowercased, with spaces turned into hyphens.
+
 - `work`: routes to the Work tab
 - `personal`: routes to the Personal tab
-- Defaults to `work` if omitted
+- `wylfa-hardtops`: routes to a tab called "Wylfa Hardtops"
+- Defaults to the first tab if omitted, or if the category matches no tab
+
+Tabs are edited from the tab strip in Station: `+` adds one, double-click renames.
 
 ## Inbox path
 Default: `~/.station/inbox`

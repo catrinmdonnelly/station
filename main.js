@@ -26,6 +26,7 @@ function ensureConfig() {
     port:   2626,
     tabs:   ['Work', 'Personal'],
     mode:   'widget',   // 'widget' | 'app' | 'menubar'
+    pinned: false,      // keep the window above everything else
   };
   const dir = path.dirname(CONFIG_PATH);
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
@@ -121,12 +122,19 @@ function createWidget(url, config) {
     frame:       false,
     transparent: true,
     resizable:   true,
-    alwaysOnTop: false,
+    alwaysOnTop: !!config.pinned,
     skipTaskbar: false,
     webPreferences: { nodeIntegration: false, contextIsolation: true },
   });
 
   win.loadURL(url);
+
+  // Pinned widgets sit above full screen apps too, otherwise the pin only
+  // half works the moment you open anything full screen.
+  if (config.pinned) {
+    win.setAlwaysOnTop(true, 'floating');
+    win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+  }
 
   win.on('moved', () => {
     const [x, y] = win.getPosition();
@@ -142,6 +150,13 @@ function createWidget(url, config) {
   win.webContents.on('context-menu', () => {
     Menu.buildFromTemplate([
       { label: 'Reload',           click: () => win.reload() },
+      { type: 'separator' },
+      {
+        label:   'Keep on top',
+        type:    'checkbox',
+        checked: win.isAlwaysOnTop(),
+        click:   () => setPinned(win, !win.isAlwaysOnTop()),
+      },
       { type: 'separator' },
       { label: 'Switch to app',      click: () => switchMode('app') },
       { label: 'Switch to menu bar', click: () => switchMode('menubar') },
@@ -163,12 +178,17 @@ function createApp(url, config) {
     y:        config.y,
     frame:    true,
     resizable: true,
-    alwaysOnTop: false,
+    alwaysOnTop: !!config.pinned,
     skipTaskbar: false,
     webPreferences: { nodeIntegration: false, contextIsolation: true },
   });
 
   win.loadURL(url);
+
+  if (config.pinned) {
+    win.setAlwaysOnTop(true, 'floating');
+    win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+  }
 
   win.on('moved', () => {
     const [x, y] = win.getPosition();
@@ -184,6 +204,13 @@ function createApp(url, config) {
   win.webContents.on('context-menu', () => {
     Menu.buildFromTemplate([
       { label: 'Reload',           click: () => win.reload() },
+      { type: 'separator' },
+      {
+        label:   'Keep on top',
+        type:    'checkbox',
+        checked: win.isAlwaysOnTop(),
+        click:   () => setPinned(win, !win.isAlwaysOnTop()),
+      },
       { type: 'separator' },
       { label: 'Switch to widget',   click: () => switchMode('widget') },
       { label: 'Switch to menu bar', click: () => switchMode('menubar') },
@@ -241,6 +268,18 @@ function createMenuBar(url) {
 }
 
 // ── Mode switching ─────────────────────────────────────────────────────────
+
+// ── Pinning ────────────────────────────────────────────────────────────────
+
+// Toggles straight away, no relaunch, and remembers the choice.
+function setPinned(win, pinned) {
+  win.setAlwaysOnTop(pinned, pinned ? 'floating' : 'normal');
+  win.setVisibleOnAllWorkspaces(pinned, { visibleOnFullScreen: pinned });
+
+  const cfg = loadConfig();
+  cfg.pinned = pinned;
+  fs.writeFileSync(CONFIG_PATH, JSON.stringify(cfg, null, 2));
+}
 
 function switchMode(newMode) {
   const cfg = loadConfig();

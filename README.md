@@ -68,6 +68,16 @@ Each agent entry shows up as a card with one of four statuses:
 
 You can tick items off, snooze them until 8am tomorrow, open the full brief the agent wrote, or copy a pre-filled message to pick up the conversation in your AI tool. Station refreshes automatically and shows a live badge count in the dock for anything urgent.
 
+### Tabs
+
+Station starts with Work and Personal, but the tabs are yours to change. Click the `+` at the end of the tab strip to add one, and double-click any tab to rename it. Clearing the name deletes the tab. Plenty of people run a tab per project rather than the default two.
+
+A tab's name becomes the `category` your agents write: a tab called "Wylfa Hardtops" is `"category": "wylfa-hardtops"`. Renaming a tab updates the cards already in it, and deleting a tab moves its cards to the first tab rather than losing them. A card whose category matches no tab shows up in the first tab, so nothing an agent sends can vanish.
+
+### Keeping the widget on top
+
+Right-click the widget and tick "Keep on top" to pin it above your other windows, including full screen apps. The choice is remembered.
+
 ---
 
 ## Claude Code plugin
@@ -127,10 +137,13 @@ The more clearly your agents identify themselves and describe what they did, the
 
 ### Category values
 
+Whatever your tabs are called, lowercased with spaces turned into hyphens:
+
 | Category | Tab |
 |----------|-----|
-| `work` | Work tab (default if omitted) |
+| `work` | Work tab (default if omitted, and where unrecognised categories land) |
 | `personal` | Personal tab |
+| `wylfa-hardtops` | A tab you added called "Wylfa Hardtops" |
 
 ### Bash snippet
 
@@ -173,8 +186,9 @@ Config lives at `~/.station/config.json`:
 | `inbox` | `~/.station/inbox` | Folder Station watches for JSON entries |
 | `workspace` | the folder holding `inbox` | Base that relative `full_brief_path` values resolve against |
 | `port` | `2626` | Local port for the HTTP server |
-| `tabs` | `["Work", "Personal"]` | Tab labels (maps to `category` in your JSON files) |
+| `tabs` | `["Work", "Personal"]` | Tab labels (maps to `category` in your JSON files). Editable from the tab strip |
 | `mode` | `widget` | `widget`, `app`, or `menubar` |
+| `pinned` | `false` | Keep the window above everything else |
 | `width` | `320` | Widget width in pixels (saved automatically on resize) |
 | `height` | `600` | Widget height in pixels |
 | `x` / `y` | — | Widget position (saved automatically on drag) |
