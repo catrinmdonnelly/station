@@ -1,4 +1,4 @@
-# Agent Inbox — Convention
+# Agent Inbox Convention
 
 Every scheduled agent should write a JSON entry here when it completes a run.
 
@@ -24,25 +24,25 @@ Example: `steelspec-monetisation-agent-2026-04-07-0906.json`
 ```
 
 ## Status values
-- `needs_input` — agent is blocked or needs a decision (shows amber)
-- `completed` — agent finished, no action needed (shows green)
-- `fyi` — informational update only (shows blue)
-- `error` — something failed and needs attention (shows red, sorted to top)
+- `needs_input`: agent is blocked or needs a decision (shows amber)
+- `completed`: agent finished, no action needed (shows green)
+- `fyi`: informational update only (shows blue)
+- `error`: something failed and needs attention (shows red, sorted to top)
 
 ## Category values
-- `work` — routes to the Work tab
-- `personal` — routes to the Personal tab
+- `work`: routes to the Work tab
+- `personal`: routes to the Personal tab
 - Defaults to `work` if omitted
 
 ## Inbox path
-Default: `~/Documents/Claude/agent-inbox`
+Default: `~/.station/inbox`
 Configured at: `~/.station/config.json`
 
 ## Bash snippet for agents
 ```bash
 TIMESTAMP=$(date +%Y-%m-%dT%H:%M:%S)
 FILENAME="agent-name-$(date +%Y-%m-%d-%H%M).json"
-INBOX="$HOME/Documents/Claude/agent-inbox"
+INBOX="$HOME/.station/inbox"
 mkdir -p "$INBOX"
 cat > "$INBOX/$FILENAME" << ENDJSON
 {

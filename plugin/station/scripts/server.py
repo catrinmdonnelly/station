@@ -29,7 +29,7 @@ def load_config():
     }
 
 config = load_config()
-INBOX   = config.get("inbox", os.path.expanduser("~/Documents/Claude/agent-inbox"))
+INBOX   = config.get("inbox", os.path.expanduser("~/.station/inbox"))
 ARCHIVE = os.path.join(INBOX, "archived")
 PORT    = config.get("port", 2626)
 

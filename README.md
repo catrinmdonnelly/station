@@ -12,7 +12,7 @@
 
 A station is a fixed point that things return to. Somewhere you hold your position, stay informed, and decide what happens next. In a world where agents go out and do the work, Station is where they come back to report in.
 
-Running scheduled agents can feel like you're working without any real visability. Did it run? Did it find anything useful? Did something go wrong at 3am and it just sat there? You end up opening log files or checking outputs one by one, which defeats the purpose entirely. Station keeps all of it in one place, giving you a visual inbox of agent updates, with separate tabs for work and personal so nothing bleeds into the wrong part of your day.
+Running scheduled agents can feel like you're working without any real visibility. Did it run? Did it find anything useful? Did something go wrong at 3am and it just sat there? You end up opening log files or checking outputs one by one, which defeats the purpose entirely. Station keeps all of it in one place, giving you a visual inbox of agent updates, with separate tabs for work and personal so nothing bleeds into the wrong part of your day.
 
 When an agent finishes a task it drops a small update into a local folder. Station picks it up, showing you what it did, what files it created, and whether it needs anything from you before the next run. 
 
@@ -33,7 +33,9 @@ npm install
 npm start
 ```
 
-Station opens in widget mode on first launch and creates a config file at `~/.station/config.json`. Right-click anywhere in the widget to switch to app or menu bar mode. You can also cycle through four built-in themes — Station red, light, dark, and glass — using the theme button at the top of the widget.
+Station opens in widget mode on first launch and creates a config file at `~/.station/config.json`. Right-click anywhere in the widget to switch to app or menu bar mode. You can also cycle through four built-in themes (Station red, light, dark, and glass) using the theme button at the top of the widget.
+
+On first launch Station leaves a single welcome card in the inbox so you can see it working before you have any agents posting. Tick it off once you have read it and it will not come back.
 
 ### Run without a terminal (recommended)
 
@@ -85,8 +87,8 @@ At the end of a run, your agent writes a JSON file to the inbox folder:
   "timestamp": "2026-04-08T09:00:00",
   "status": "needs_input",
   "category": "work",
-  "headline": "Three pages dropped out of top 10 — manual review needed",
-  "summary": "Pages /products, /about, and /contact lost ranking overnight. Likely a crawl issue. Checked sitemap — all present. Needs eyes before next scheduled run.",
+  "headline": "Three pages dropped out of top 10, manual review needed",
+  "summary": "Pages /products, /about, and /contact lost ranking overnight. Likely a crawl issue. Checked sitemap, all present. Needs eyes before next scheduled run.",
   "actions_needed": [
     "Check Google Search Console for crawl errors",
     "Confirm sitemap is being picked up correctly"
@@ -134,7 +136,7 @@ The more clearly your agents identify themselves and describe what they did, the
 
 ```bash
 TIMESTAMP=$(date +%Y-%m-%dT%H:%M:%S)
-INBOX="$HOME/Documents/Claude/agent-inbox"
+INBOX="$HOME/.station/inbox"
 cat > "$INBOX/my-agent-$(date +%Y-%m-%d-%H%M).json" << EOF
 {
   "agent": "my-agent",
@@ -142,7 +144,7 @@ cat > "$INBOX/my-agent-$(date +%Y-%m-%d-%H%M).json" << EOF
   "timestamp": "$TIMESTAMP",
   "status": "fyi",
   "category": "work",
-  "headline": "Weekly report ready — 3 items flagged for review",
+  "headline": "Weekly report ready, 3 items flagged for review",
   "summary": "Run completed successfully. Found 3 items that need attention before next scheduled run.",
   "actions_needed": [],
   "files_created": []
@@ -158,7 +160,7 @@ Config lives at `~/.station/config.json`:
 
 ```json
 {
-  "inbox": "~/Documents/Claude/agent-inbox",
+  "inbox": "~/.station/inbox",
   "port": 2626,
   "tabs": ["Work", "Personal"],
   "mode": "widget"
@@ -167,7 +169,7 @@ Config lives at `~/.station/config.json`:
 
 | Key | Default | Description |
 |-----|---------|-------------|
-| `inbox` | `~/Documents/Claude/agent-inbox` | Folder Station watches for JSON entries |
+| `inbox` | `~/.station/inbox` | Folder Station watches for JSON entries |
 | `port` | `2626` | Local port for the HTTP server |
 | `tabs` | `["Work", "Personal"]` | Tab labels (maps to `category` in your JSON files) |
 | `mode` | `widget` | `widget`, `app`, or `menubar` |

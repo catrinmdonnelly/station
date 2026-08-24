@@ -5,6 +5,7 @@ const path  = require('path');
 const os    = require('os');
 const fs    = require('fs');
 const { startServer } = require('./server.js');
+const { seedWelcome } = require('./welcome.js');
 
 app.name = 'Station';
 
@@ -21,7 +22,7 @@ function loadConfig() {
 
 function ensureConfig() {
   const defaults = {
-    inbox:  path.join(os.homedir(), 'Documents', 'Claude', 'agent-inbox'),
+    inbox:  path.join(os.homedir(), '.station', 'inbox'),
     port:   2626,
     tabs:   ['Work', 'Personal'],
     mode:   'widget',   // 'widget' | 'app' | 'menubar'
@@ -265,6 +266,9 @@ app.whenReady().then(() => {
   const mode   = config.mode || 'widget';
 
   fs.mkdirSync(inbox, { recursive: true });
+
+  // First run only: leave one card behind so a new install shows something real
+  seedWelcome(inbox);
 
   // Seed notification tracking with existing inbox items (no spam on startup)
   initNotifiedIds(inbox);

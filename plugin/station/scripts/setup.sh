@@ -4,7 +4,7 @@
 
 set -e
 
-INBOX_PATH="${1:-$HOME/Documents/Claude/agent-inbox}"
+INBOX_PATH="${1:-$HOME/.station/inbox}"
 STATION_DIR="$HOME/.station"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PLIST="$HOME/Library/LaunchAgents/com.station.server.plist"

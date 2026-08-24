@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 const { startServer } = require('../server.js');
+const { seedWelcome } = require('../welcome.js');
 const { execSync, exec } = require('child_process');
 const os = require('os');
 const fs = require('fs');
@@ -17,7 +18,7 @@ function loadConfig() {
     }
   } catch (e) {}
   return {
-    inbox: path.join(os.homedir(), 'Documents', 'Claude', 'agent-inbox'),
+    inbox: path.join(os.homedir(), '.station', 'inbox'),
     port: 2626
   };
 }
@@ -27,7 +28,7 @@ function ensureConfig() {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
   if (!fs.existsSync(CONFIG_PATH)) {
     const config = {
-      inbox: path.join(os.homedir(), 'Documents', 'Claude', 'agent-inbox'),
+      inbox: path.join(os.homedir(), '.station', 'inbox'),
       port: 2626,
       tabs: ['Work', 'Personal']
     };
@@ -44,6 +45,9 @@ const noOpen  = args.includes('--no-open');
 
 const config = ensureConfig();
 const port = config.port || 2626;
+
+// First run only: leave one card behind so a new install shows something real
+seedWelcome(config.inbox);
 
 startServer(config, () => {
   const url = `http://localhost:${port}`;

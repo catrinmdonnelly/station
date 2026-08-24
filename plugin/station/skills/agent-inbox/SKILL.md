@@ -12,16 +12,16 @@ At the end of every scheduled agent run, write a JSON file to the Station inbox 
 
 ## Inbox location
 
-Read from config at `~/.station/config.json` to get the inbox path. If the config doesn't exist, default to `~/Documents/Claude/agent-inbox`.
+Read from config at `~/.station/config.json` to get the inbox path. If the config doesn't exist, default to `~/.station/inbox`.
 
 ```bash
 INBOX=$(python3 -c "
 import json, os
 cfg = os.path.expanduser('~/.station/config.json')
 if os.path.exists(cfg):
-    print(json.load(open(cfg)).get('inbox', os.path.expanduser('~/Documents/Claude/agent-inbox')))
+    print(json.load(open(cfg)).get('inbox', os.path.expanduser('~/.station/inbox')))
 else:
-    print(os.path.expanduser('~/Documents/Claude/agent-inbox'))
+    print(os.path.expanduser('~/.station/inbox'))
 ")
 ```
 

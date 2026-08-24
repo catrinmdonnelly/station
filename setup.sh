@@ -4,7 +4,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-INBOX_PATH="${1:-$HOME/Documents/Claude/agent-inbox}"
+INBOX_PATH="${1:-$HOME/.station/inbox}"
 STATION_DIR="$HOME/.station"
 ELECTRON="$SCRIPT_DIR/node_modules/.bin/electron"
 APP_PATH="$HOME/Applications/Station.app"

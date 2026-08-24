@@ -39,7 +39,7 @@ open http://localhost:2626
 
 **If not installed:** run setup. The setup script is at `${CLAUDE_PLUGIN_ROOT}/scripts/setup.sh`.
 
-Ask the user for their inbox path (default: `~/Documents/Claude/agent-inbox`), then run:
+Ask the user for their inbox path (default: `~/.station/inbox`), then run:
 ```bash
 bash "${CLAUDE_PLUGIN_ROOT}/scripts/setup.sh" "/path/to/their/inbox"
 ```
