@@ -161,6 +161,7 @@ Config lives at `~/.station/config.json`:
 ```json
 {
   "inbox": "~/.station/inbox",
+  "workspace": "~/.station",
   "port": 2626,
   "tabs": ["Work", "Personal"],
   "mode": "widget"
@@ -170,6 +171,7 @@ Config lives at `~/.station/config.json`:
 | Key | Default | Description |
 |-----|---------|-------------|
 | `inbox` | `~/.station/inbox` | Folder Station watches for JSON entries |
+| `workspace` | the folder holding `inbox` | Base that relative `full_brief_path` values resolve against |
 | `port` | `2626` | Local port for the HTTP server |
 | `tabs` | `["Work", "Personal"]` | Tab labels (maps to `category` in your JSON files) |
 | `mode` | `widget` | `widget`, `app`, or `menubar` |

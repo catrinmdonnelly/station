@@ -21,7 +21,7 @@ function loadItems(inbox, snoozed) {
       items.push(item);
     } catch (e) {}
   }
-  const order = { error: 0, needs_input: 1, fyi: 2, completed: 3 };
+  const order = { error: 0, needs_input: 1, responded: 1.5, fyi: 2, completed: 3 };
   items.sort((a, b) => {
     const sa = order[a.status] ?? 2;
     const sb = order[b.status] ?? 2;
@@ -96,6 +96,146 @@ function archiveAllDone(inbox, archive) {
   return count;
 }
 
+// ── Interactive card response ─────────────────────────────────────────────
+
+function recordResponse(inbox, cardId, entryId, values) {
+  if (!cardId) return false;
+  const responsesDir = path.join(inbox, 'responses');
+  fs.mkdirSync(responsesDir, { recursive: true });
+
+  const responseFile = path.join(responsesDir, cardId + '.json');
+  const payload = {
+    card_id:      cardId,
+    responded_at: new Date().toISOString(),
+    values:       values || {}
+  };
+  fs.writeFileSync(responseFile, JSON.stringify(payload, null, 2));
+
+  let callbackUrl = null;
+  if (entryId) {
+    const entryFile = path.join(inbox, entryId + '.json');
+    if (fs.existsSync(entryFile)) {
+      try {
+        const entry = JSON.parse(fs.readFileSync(entryFile, 'utf8'));
+        entry.status = 'responded';
+        entry._responded_at = new Date().toISOString();
+        fs.writeFileSync(entryFile, JSON.stringify(entry, null, 2));
+        callbackUrl = entry.interactive && entry.interactive.callback_url;
+      } catch (e) { return false; }
+    }
+  }
+
+  if (callbackUrl) postCallback(callbackUrl, payload);
+  return true;
+}
+
+function postCallback(urlStr, payload) {
+  try {
+    const parsedUrl = new URL(urlStr);
+    const lib = parsedUrl.protocol === 'https:' ? require('https') : require('http');
+    const body = JSON.stringify(payload);
+    const req = lib.request({
+      hostname: parsedUrl.hostname,
+      port:     parsedUrl.port || (parsedUrl.protocol === 'https:' ? 443 : 80),
+      path:     parsedUrl.pathname + (parsedUrl.search || ''),
+      method:   'POST',
+      headers:  {
+        'Content-Type':   'application/json',
+        'Content-Length': Buffer.byteLength(body),
+        'User-Agent':     'Station/2.0',
+      }
+    }, () => {});
+    req.on('error', () => {});
+    req.write(body);
+    req.end();
+  } catch (e) {}
+}
+
+// ── Adapters: foreign format to Station card ──────────────────────────────
+
+function translateSlackToCard(payload) {
+  if (!payload) return null;
+  const agent        = payload.agent_id || payload.agent || 'external-agent';
+  const agentDisplay = payload.agent_display || agent.replace(/[-_]/g, ' ');
+
+  let headline = '';
+  const summaryParts = [];
+  const buttons = [];
+
+  for (const block of (payload.blocks || [])) {
+    if (!block || !block.type) continue;
+    if (block.type === 'header' && block.text) {
+      if (!headline) headline = (block.text.text || '').trim();
+      else summaryParts.push((block.text.text || '').trim());
+    } else if (block.type === 'section' && block.text) {
+      const text = (block.text.text || '').trim();
+      if (!headline) {
+        const firstLine = text.split('\n')[0];
+        headline = firstLine;
+        const rest = text.slice(firstLine.length).trim();
+        if (rest) summaryParts.push(rest);
+      } else {
+        summaryParts.push(text);
+      }
+    } else if (block.type === 'context' && Array.isArray(block.elements)) {
+      for (const el of block.elements) {
+        if (el && el.text) summaryParts.push(el.text);
+      }
+    } else if (block.type === 'actions' && Array.isArray(block.elements)) {
+      for (const el of block.elements) {
+        if (el && el.type === 'button') {
+          const label = (el.text && el.text.text) || el.value || 'Action';
+          buttons.push({
+            value: el.value || label.toLowerCase().replace(/\s+/g, '_'),
+            label,
+            style: el.style === 'primary' ? 'primary'
+                 : el.style === 'danger'  ? 'destructive'
+                 : 'secondary',
+          });
+        }
+      }
+    }
+  }
+
+  if (!headline && payload.text) headline = String(payload.text).trim();
+  if (!headline) headline = 'New card from ' + agentDisplay;
+
+  const cardId  = payload.card_id || `${agent}-${Date.now()}`;
+  const summary = summaryParts.join('\n\n').trim();
+
+  const components = [];
+  if (buttons.length > 0) {
+    components.push({ type: 'buttons', id: 'action', options: buttons });
+  }
+
+  const card = {
+    agent,
+    agent_display: agentDisplay,
+    timestamp:     new Date().toISOString().replace('Z','').slice(0, 19),
+    status:        'needs_input',
+    category:      payload.category || 'work',
+    headline,
+    summary,
+    interactive: {
+      card_id:    cardId,
+      components,
+    },
+  };
+  if (payload.accent)       card.accent = payload.accent;
+  if (payload.response_url) card.interactive.callback_url = payload.response_url;
+
+  return card;
+}
+
+function writeCardToInbox(inbox, card) {
+  const ts   = new Date();
+  const pad2 = n => String(n).padStart(2, '0');
+  const stem = `${ts.getFullYear()}-${pad2(ts.getMonth()+1)}-${pad2(ts.getDate())}-${pad2(ts.getHours())}${pad2(ts.getMinutes())}${pad2(ts.getSeconds())}`;
+  const fileName = `${card.agent}-${stem}.json`;
+  fs.writeFileSync(path.join(inbox, fileName), JSON.stringify(card, null, 2));
+  return fileName.replace('.json', '');
+}
+
 // ── Time ───────────────────────────────────────────────────────────────────
 
 function formatTime(ts) {
@@ -153,7 +293,70 @@ function renderPage(items, config) {
     return `<span class="tab${active}" id="tab-${tid}" onclick="switchTab('${tid}')">${label}</span>`;
   }).join('');
 
+  function renderInteractiveCard(item) {
+    const iid       = item._id;
+    const agent     = item.agent_display || item.agent || '';
+    const headline  = item.headline || '';
+    const summary   = item.summary || '';
+    const accent    = item.accent || (item.interactive && item.interactive.accent) || '#E63535';
+    const cat       = item.category || defaultTab;
+    const ts        = formatTime(item.timestamp);
+    const cardId    = (item.interactive && item.interactive.card_id) || iid;
+    const isResponded = item.status === 'responded';
+    const components  = (item.interactive && item.interactive.components) || [];
+    const buttonsComp  = components.find(c => c.type === 'buttons');
+    const approvalComp = components.find(c => c.type === 'approval');
+    const hasComplexInputs = components.some(c =>
+      ['text','textarea','choice','multichoice','preview'].includes(c.type)
+    );
+
+    const dis = isResponded ? ' disabled' : '';
+    let actionsHtml = '';
+
+    if (approvalComp) {
+      const aid = esc(approvalComp.id);
+      actionsHtml =
+        `<button class="ic-btn ic-btn-primary" data-ic-comp="${aid}" data-ic-value="approve"${dis}>${esc(approvalComp.approve_label || 'Approve')}</button>`
+      + `<button class="ic-btn ic-btn-secondary" data-ic-comp="${aid}" data-ic-value="decline"${dis}>${esc(approvalComp.decline_label || 'Decline')}</button>`;
+    } else if (buttonsComp) {
+      const bid = esc(buttonsComp.id);
+      actionsHtml = buttonsComp.options.map(opt => {
+        const cls = opt.style === 'primary' ? 'ic-btn-primary' : 'ic-btn-secondary';
+        return `<button class="ic-btn ${cls}" data-ic-comp="${bid}" data-ic-value="${esc(opt.value)}"${dis}>${esc(opt.label)}</button>`;
+      }).join('');
+    }
+
+    const complexNotice = (hasComplexInputs && !isResponded)
+      ? `<div class="ic-complex">Open in browser to fill in</div>`
+      : '';
+
+    const statusBadge = isResponded
+      ? `<span class="ic-status-done">Answered</span>`
+      : `<span class="ic-status-pending">Needs you</span>`;
+
+    const respondedClass = isResponded ? ' ic-done' : '';
+
+    return `<div class="card icard${respondedClass}" id="card-${iid}" data-card-id="${esc(cardId)}" data-entry-id="${iid}" data-category="${cat}" data-status="${item.status || 'needs_input'}" style="--ic-accent: ${esc(accent)}">
+      <span class="ic-b ic-b-top"></span>
+      <span class="ic-b ic-b-right"></span>
+      <span class="ic-b ic-b-bottom"></span>
+      <span class="ic-b ic-b-left"></span>
+      <div class="icard-content">
+        <div class="icard-meta">
+          <span class="icard-agent">${esc(agent)}</span>
+          ${statusBadge}
+          <span class="icard-time">${ts}</span>
+        </div>
+        <div class="icard-title">${esc(headline)}</div>
+        ${summary ? `<div class="icard-desc">${esc(summary)}</div>` : ''}
+        ${complexNotice}
+        <div class="icard-actions">${actionsHtml}</div>
+      </div>
+    </div>`;
+  }
+
   function renderCard(item) {
+    if (item.interactive) return renderInteractiveCard(item);
     const status = item.status || 'fyi';
     const slabel = {
       needs_input: 'Your call',
@@ -404,7 +607,7 @@ function renderPage(items, config) {
 
   .headline{font-size:12.5px;font-weight:600;letter-spacing:-0.01em;
     line-height:1.35;color:var(--text);cursor:pointer;margin-bottom:6px}
-  .summary{font-size:11.5px;color:var(--muted);line-height:1.6;margin-bottom:7px}
+  .summary{font-size:11.5px;color:var(--muted);line-height:1.6;margin-bottom:7px;white-space:pre-wrap}
 
   .actions{padding-left:8px;border-left:2px solid rgba(253,230,138,0.45);margin-bottom:7px}
   .action-item{font-size:11.5px;color:var(--muted);line-height:1.5;
@@ -440,6 +643,38 @@ function renderPage(items, config) {
 
   .empty{padding:28px 12px;text-align:center;font-size:12px;color:var(--subtle)}
   .card.dismissing{opacity:0;transform:translateX(10px);transition:opacity 0.2s,transform 0.2s}
+
+  /* ── Interactive cards (agent-initiated) ── */
+  .icard{position:relative;border:none;background:var(--card-bg);padding:14px 14px 12px;border-radius:4px;overflow:hidden}
+  .icard:hover{box-shadow:0 2px 8px rgba(0,0,0,0.08)}
+  .ic-b{position:absolute;background:var(--ic-accent);transition:transform 220ms cubic-bezier(0.65,0,0.35,1);pointer-events:none}
+  .ic-b-top{top:0;left:0;right:0;height:2px;transform-origin:right center}
+  .ic-b-right{top:0;right:0;bottom:0;width:2px;transform-origin:center bottom}
+  .ic-b-bottom{bottom:0;left:0;right:0;height:2px;transform-origin:left center}
+  .ic-b-left{top:0;left:0;bottom:0;width:2px;transform-origin:center top}
+  .icard.resolving .ic-b-top{transform:scaleX(0)}
+  .icard.resolving .ic-b-right{transform:scaleY(0);transition-delay:140ms}
+  .icard.resolving .ic-b-bottom{transform:scaleX(0);transition-delay:280ms}
+  .icard.resolving .ic-b-left{transform:scaleY(0);transition-delay:420ms}
+  .icard-content{position:relative;z-index:1;transition:opacity 280ms ease}
+  .icard.resolving .icard-content{opacity:0;transition-delay:600ms}
+  .icard-meta{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+  .icard-agent{font-size:10px;font-weight:700;color:var(--ic-accent);text-transform:lowercase;letter-spacing:0.04em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:120px}
+  .ic-status-pending{font-size:9.5px;font-weight:600;color:var(--ic-accent);text-transform:uppercase;letter-spacing:0.05em}
+  .ic-status-done{font-size:9.5px;font-weight:600;color:#16A34A;text-transform:uppercase;letter-spacing:0.05em}
+  .icard-time{font-size:10px;color:var(--subtle);margin-left:auto}
+  .icard-title{font-size:12.5px;font-weight:600;letter-spacing:-0.01em;line-height:1.35;color:var(--text);margin-bottom:5px}
+  .icard-desc{font-size:11.5px;color:var(--muted);line-height:1.5;margin-bottom:9px}
+  .ic-complex{font-size:10.5px;color:var(--subtle);font-style:italic;margin-bottom:7px}
+  .icard-actions{display:flex;gap:5px;flex-wrap:wrap}
+  .ic-btn{font-size:11px;font-weight:600;letter-spacing:0.01em;padding:6px 10px;border-radius:3px;cursor:pointer;border:1.5px solid var(--ic-accent);font-family:inherit;transition:120ms ease;background:var(--card-bg);color:var(--ic-accent)}
+  .ic-btn-primary{background:var(--ic-accent);color:#FFFFFF}
+  .ic-btn-primary:hover:not(:disabled){filter:brightness(0.88)}
+  .ic-btn-secondary:hover:not(:disabled){background:var(--ic-accent);color:#FFFFFF}
+  .ic-btn:disabled{opacity:0.4;cursor:not-allowed;filter:none}
+  .icard.ic-done{opacity:0.6}
+  .bg.dark .icard,.bg.glass .icard{background:var(--card-bg)}
+  .bg.dark .ic-btn-secondary,.bg.glass .ic-btn-secondary{background:transparent}
 </style></head><body>
 <div class="bg" id="bg">
   <div class="header">
@@ -603,6 +838,36 @@ function renderPage(items, config) {
     setTimeout(function(){btn.textContent='Discuss';btn.classList.remove('copied');},1800);
   }
 
+  // ── Interactive card submit ────────────────────────────────────────────────
+  document.addEventListener('click',function(e){
+    var btn=e.target.closest('.ic-btn');
+    if(!btn||btn.disabled) return;
+    var card=btn.closest('.icard');
+    if(!card) return;
+    e.preventDefault();e.stopPropagation();
+    var values={};
+    values[btn.dataset.icComp]=btn.dataset.icValue;
+    ic_submit(card.dataset.cardId,card.dataset.entryId,values,card);
+  });
+
+  function ic_submit(cardId,entryId,values,card){
+    card.querySelectorAll('.ic-btn').forEach(function(b){b.disabled=true;});
+    fetch('/api/respond',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({card_id:cardId,entry_id:entryId,values:values})})
+      .then(function(r){return r.json();})
+      .then(function(){
+        card.classList.add('resolving');
+        setTimeout(function(){
+          card.remove();
+          updateCounts();
+          checkEmpty();
+        },1100);
+      })
+      .catch(function(){
+        card.querySelectorAll('.ic-btn').forEach(function(b){b.disabled=false;});
+      });
+  }
+
   // ── UI helpers ─────────────────────────────────────────────────────────────
   function checkEmpty(){
     var vis=[...document.querySelectorAll('.card')].filter(function(c){
@@ -635,15 +900,19 @@ function renderPage(items, config) {
 // ── Server ─────────────────────────────────────────────────────────────────
 
 function startServer(config, onReady) {
-  const inbox      = config.inbox || path.join(os.homedir(), 'Documents', 'Claude', 'agent-inbox');
+  const inbox      = config.inbox || path.join(os.homedir(), '.station', 'inbox');
   const archive    = path.join(inbox, 'archived');
   const snoozed    = path.join(inbox, 'snoozed');
   const port       = config.port || 2626;
-  const claudeBase = path.join(os.homedir(), 'Documents', 'Claude');
+  // Relative full_brief_path values resolve against this. Defaults to the
+  // folder holding the inbox, which is usually where the agent is working.
+  // Set "workspace" in config.json to point somewhere else.
+  const workspace  = config.workspace || path.dirname(inbox);
 
   fs.mkdirSync(inbox,   { recursive: true });
   fs.mkdirSync(archive, { recursive: true });
   fs.mkdirSync(snoozed, { recursive: true });
+  fs.mkdirSync(path.join(inbox, 'responses'), { recursive: true });
 
   const server = http.createServer((req, res) => {
     const url = req.url.split('?')[0];
@@ -683,6 +952,71 @@ function startServer(config, onReady) {
           res.end(JSON.stringify({ ok }));
           return;
         }
+        if (url === '/api/respond') {
+          try {
+            const ok = recordResponse(inbox, data.card_id || '', data.entry_id || '', data.values || {});
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ ok }));
+          } catch (e) {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ ok: false, error: String(e) }));
+          }
+          return;
+        }
+        if (url === '/api/cards') {
+          if (!data.agent || !data.headline) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ ok: false, error: 'agent and headline required' }));
+            return;
+          }
+          try {
+            const ts = data.timestamp ? new Date(data.timestamp) : new Date();
+            const pad2 = n => String(n).padStart(2, '0');
+            const stem = `${ts.getFullYear()}-${pad2(ts.getMonth()+1)}-${pad2(ts.getDate())}-${pad2(ts.getHours())}${pad2(ts.getMinutes())}${pad2(ts.getSeconds())}`;
+            const fileName = `${data.agent}-${stem}.json`;
+            const entry = {
+              agent:         data.agent,
+              agent_display: data.agent_display || data.agent.replace(/[-_]/g, ' '),
+              timestamp:     ts.toISOString().replace('Z','').slice(0, 19),
+              status:        data.status || 'needs_input',
+              category:      data.category || 'work',
+              headline:      data.headline,
+              summary:       data.summary || '',
+            };
+            if (data.accent)          entry.accent = data.accent;
+            if (data.interactive)     entry.interactive = data.interactive;
+            if (data.actions_needed)  entry.actions_needed = data.actions_needed;
+            if (data.files_created)   entry.files_created = data.files_created;
+            if (data.full_brief_path) entry.full_brief_path = data.full_brief_path;
+
+            fs.writeFileSync(path.join(inbox, fileName), JSON.stringify(entry, null, 2));
+            const entryId = fileName.replace('.json', '');
+            const cardId  = (data.interactive && data.interactive.card_id) || entryId;
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ ok: true, entry_id: entryId, card_id: cardId }));
+          } catch (e) {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ ok: false, error: String(e) }));
+          }
+          return;
+        }
+        if (url === '/api/adapters/slack') {
+          try {
+            const card = translateSlackToCard(data);
+            if (!card) {
+              res.writeHead(400, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ ok: false, error: 'could not translate payload' }));
+              return;
+            }
+            const entryId = writeCardToInbox(inbox, card);
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ ok: true, entry_id: entryId, card_id: card.interactive.card_id, adapter: 'slack' }));
+          } catch (e) {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ ok: false, error: String(e) }));
+          }
+          return;
+        }
         if (url === '/api/archive-all') {
           const count = archiveAllDone(inbox, archive);
           res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -693,7 +1027,7 @@ function startServer(config, onReady) {
           const briefPath = data.path || '';
           const resolved  = path.isAbsolute(briefPath)
             ? briefPath
-            : path.join(claudeBase, briefPath);
+            : path.join(workspace, briefPath);
           if (fs.existsSync(resolved)) {
             exec(`open "${resolved}" || open -t "${resolved}"`);
             res.writeHead(200, { 'Content-Type': 'application/json' });
