@@ -73,7 +73,7 @@ You can tick items off, snooze them until 8am tomorrow, open the full brief the 
 
 Station starts with Work and Personal, but the tabs are yours to change. Click the `+` at the end of the tab strip to add one, and double-click any tab to rename it. Clearing the name deletes the tab. Plenty of people run a tab per project rather than the default two.
 
-A tab's name becomes the `category` your agents write: a tab called "Wylfa Hardtops" is `"category": "wylfa-hardtops"`. Renaming a tab updates the cards already in it, and deleting a tab moves its cards to the first tab rather than losing them. A card whose category matches no tab shows up in the first tab, so nothing an agent sends can vanish.
+A tab's name becomes the `category` your agents write: a tab called "Client Work" is `"category": "client-work"`. Renaming a tab updates the cards already in it, and deleting a tab moves its cards to the first tab rather than losing them. A card whose category matches no tab shows up in the first tab, so nothing an agent sends can vanish.
 
 ### Keeping the widget on top
 
@@ -145,7 +145,7 @@ Whatever your tabs are called, lowercased with spaces turned into hyphens:
 |----------|-----|
 | `work` | Work tab (default if omitted, and where unrecognised categories land) |
 | `personal` | Personal tab |
-| `wylfa-hardtops` | A tab you added called "Wylfa Hardtops" |
+| `client-work` | A tab you added called "Client Work" |
 
 ### Bash snippet
 
@@ -231,6 +231,8 @@ When you press a button, Station writes your answer to `responses/<card_id>.json
 Your agent watches for that file to know what you decided. If the card includes `interactive.callback_url`, Station POSTs the same payload straight to it instead of making you poll.
 
 Set `accent` on a card to colour its buttons, so an agent's cards are recognisable at a glance.
+
+If you would rather not hand-roll the sending and the waiting, `helpers/` has a small zero-dependency library for Python and one for Node that does both. See [helpers/README.md](helpers/README.md).
 
 ---
 

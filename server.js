@@ -306,13 +306,22 @@ function translateSlackToCard(payload) {
   return card;
 }
 
+// The stem is only accurate to the second, so one agent posting twice inside
+// the same second would otherwise write over its own first card and lose it.
+function uniqueEntryId(inbox, agent, stem) {
+  let id = `${agent}-${stem}`;
+  let n  = 2;
+  while (fs.existsSync(path.join(inbox, id + '.json'))) id = `${agent}-${stem}-${n++}`;
+  return id;
+}
+
 function writeCardToInbox(inbox, card) {
   const ts   = new Date();
   const pad2 = n => String(n).padStart(2, '0');
   const stem = `${ts.getFullYear()}-${pad2(ts.getMonth()+1)}-${pad2(ts.getDate())}-${pad2(ts.getHours())}${pad2(ts.getMinutes())}${pad2(ts.getSeconds())}`;
-  const fileName = `${card.agent}-${stem}.json`;
-  fs.writeFileSync(path.join(inbox, fileName), JSON.stringify(card, null, 2));
-  return fileName.replace('.json', '');
+  const entryId = uniqueEntryId(inbox, card.agent, stem);
+  fs.writeFileSync(path.join(inbox, entryId + '.json'), JSON.stringify(card, null, 2));
+  return entryId;
 }
 
 // ── Time ───────────────────────────────────────────────────────────────────
@@ -351,7 +360,7 @@ function esc(str) {
 }
 
 // A tab's id is what agents put in "category". Kept simple on purpose, so
-// a tab called "Wylfa Hardtops" is category "wylfa-hardtops".
+// a tab called "Client Work" is category "client-work".
 // Letters and numbers survive, everything else becomes a hyphen, so a tab
 // name can never break out of the id or the inline onclick. Accented and
 // Welsh letters are kept, so "Llŷn" stays readable as a category.
@@ -1145,7 +1154,7 @@ function startServer(config, onReady) {
             const ts = data.timestamp ? new Date(data.timestamp) : new Date();
             const pad2 = n => String(n).padStart(2, '0');
             const stem = `${ts.getFullYear()}-${pad2(ts.getMonth()+1)}-${pad2(ts.getDate())}-${pad2(ts.getHours())}${pad2(ts.getMinutes())}${pad2(ts.getSeconds())}`;
-            const fileName = `${data.agent}-${stem}.json`;
+            const entryId = uniqueEntryId(inbox, data.agent, stem);
             const entry = {
               agent:         data.agent,
               agent_display: data.agent_display || data.agent.replace(/[-_]/g, ' '),
@@ -1161,8 +1170,7 @@ function startServer(config, onReady) {
             if (data.files_created)   entry.files_created = data.files_created;
             if (data.full_brief_path) entry.full_brief_path = data.full_brief_path;
 
-            fs.writeFileSync(path.join(inbox, fileName), JSON.stringify(entry, null, 2));
-            const entryId = fileName.replace('.json', '');
+            fs.writeFileSync(path.join(inbox, entryId + '.json'), JSON.stringify(entry, null, 2));
             const cardId  = (data.interactive && data.interactive.card_id) || entryId;
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ ok: true, entry_id: entryId, card_id: cardId }));

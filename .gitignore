@@ -24,5 +24,9 @@ npm-debug.log*
 # Local config (each user has their own at ~/.station/config.json)
 config.json
 
+# Python
+__pycache__/
+*.pyc
+
 # Environment
 .env

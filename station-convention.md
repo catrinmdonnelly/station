@@ -4,14 +4,14 @@ Every scheduled agent should write a JSON entry here when it completes a run.
 
 ## File naming
 `[agent-name]-[YYYY-MM-DD-HHMM].json`
-Example: `steelspec-monetisation-agent-2026-04-07-0906.json`
+Example: `seo-monitor-2026-04-07-0906.json`
 
 ## JSON format
 
 ```json
 {
-  "agent": "steelspec-monetisation-agent",
-  "agent_display": "SteelSpec Monetisation",
+  "agent": "seo-monitor",
+  "agent_display": "SEO Monitor",
   "timestamp": "2026-04-07T09:06:00",
   "status": "needs_input",
   "category": "work",
@@ -35,7 +35,7 @@ The category is the tab name, lowercased, with spaces turned into hyphens.
 
 - `work`: routes to the Work tab
 - `personal`: routes to the Personal tab
-- `wylfa-hardtops`: routes to a tab called "Wylfa Hardtops"
+- `client-work`: routes to a tab called "Client Work"
 - Defaults to the first tab if omitted, or if the category matches no tab
 
 Tabs are edited from the tab strip in Station: `+` adds one, double-click renames.
