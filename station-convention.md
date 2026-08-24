@@ -28,6 +28,7 @@ Example: `steelspec-monetisation-agent-2026-04-07-0906.json`
 - `completed`: agent finished, no action needed (shows green)
 - `fyi`: informational update only (shows blue)
 - `error`: something failed and needs attention (shows red, sorted to top)
+- `responded`: set by Station when you answer an interactive card, not written by agents
 
 ## Category values
 The category is the tab name, lowercased, with spaces turned into hyphens.

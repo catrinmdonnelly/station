@@ -65,6 +65,7 @@ Each agent entry shows up as a card with one of four statuses:
 | `needs_input` | The agent is blocked and waiting on you |
 | `fyi` | Work done, nothing urgent |
 | `completed` | All finished, ready to dismiss |
+| `responded` | You answered a card's buttons, set by Station rather than by an agent |
 
 You can tick items off, snooze them until 8am tomorrow, open the full brief the agent wrote, or copy a pre-filled message to pick up the conversation in your AI tool. Station refreshes automatically and shows a live badge count in the dock for anything urgent.
 
@@ -134,6 +135,7 @@ The more clearly your agents identify themselves and describe what they did, the
 | `needs_input` | Agent is blocked and needs you to do something |
 | `fyi` | Work done, no action needed |
 | `completed` | Everything finished, nothing blocking |
+| `responded` | Set by Station when you answer an interactive card. Agents do not write this |
 
 ### Category values
 
@@ -164,6 +166,89 @@ cat > "$INBOX/my-agent-$(date +%Y-%m-%d-%H%M).json" << EOF
 }
 EOF
 ```
+
+---
+
+## Posting over HTTP instead of writing files
+
+Writing a JSON file is the simplest way in, but Station also accepts cards over HTTP while it is running. Useful for agents that cannot easily write to your disk, or that already speak HTTP.
+
+```bash
+curl -X POST http://localhost:2626/api/cards \
+  -H "Content-Type: application/json" \
+  -d '{
+    "agent": "deploy-bot",
+    "headline": "Build 214 is ready to ship",
+    "summary": "All tests green.",
+    "status": "needs_input",
+    "category": "work"
+  }'
+```
+
+Only `agent` and `headline` are required. Everything else falls back to the same defaults as a file-based card. The response gives you back the card's ids:
+
+```json
+{ "ok": true, "entry_id": "deploy-bot-2026-08-24-185146", "card_id": "deploy-bot-2026-08-24-185146" }
+```
+
+---
+
+## Cards you can answer
+
+A card can carry buttons, so instead of reading an update you answer it and the agent picks up your decision. Add an `interactive` block:
+
+```json
+{
+  "agent": "invoice-agent",
+  "headline": "Send the March invoice?",
+  "summary": "Drafted and ready. Needs your say-so before it goes.",
+  "interactive": {
+    "card_id": "inv-march",
+    "components": [
+      { "type": "approval", "approve_label": "Send it", "decline_label": "Hold" }
+    ]
+  }
+}
+```
+
+Two component types:
+
+| Type | What it gives you |
+|------|-------------------|
+| `approval` | Two buttons. Labels default to Approve and Decline |
+| `buttons` | Your own set, from an `options` list of `{ value, label, style }` where style is `primary`, `secondary` or `destructive` |
+
+When you press a button, Station writes your answer to `responses/<card_id>.json` inside the inbox folder and flips the card to `responded`:
+
+```json
+{
+  "card_id": "inv-march",
+  "responded_at": "2026-08-24T17:52:09.895Z",
+  "values": { "approval": "approve" }
+}
+```
+
+Your agent watches for that file to know what you decided. If the card includes `interactive.callback_url`, Station POSTs the same payload straight to it instead of making you poll.
+
+Set `accent` on a card to colour its buttons, so an agent's cards are recognisable at a glance.
+
+---
+
+## Slack-shaped payloads
+
+If you already have an agent that builds Slack Block Kit messages, point it at the Slack adapter and Station will translate the blocks into a card, buttons included, with no changes to the agent:
+
+```bash
+curl -X POST http://localhost:2626/api/adapters/slack \
+  -H "Content-Type: application/json" \
+  -d '{"agent":"ci","blocks":[
+        {"type":"header","text":{"text":"Deploy failed on main"}},
+        {"type":"section","text":{"text":"Step 4 timed out."}},
+        {"type":"actions","elements":[
+          {"type":"button","text":{"text":"Retry"},"value":"retry","style":"primary"}]}]}'
+```
+
+`header` and `section` blocks become the headline and summary, and `actions` become buttons you can press.
 
 ---
 
@@ -199,7 +284,9 @@ Config lives at `~/.station/config.json`:
 
 Station is a Node.js HTTP server that reads JSON files from your inbox folder and renders them as HTML. In Electron mode, `main.js` wraps the server in a native window with a live dock badge and system notifications, watching the inbox folder with `fs.watch()` so updates appear immediately. `setup.sh` creates a native macOS app wrapper and Login Item so the whole thing starts on login without a terminal.
 
-Agents write files in, Station reads them out. Dismissed items move to `archived/`, snoozed items move to `snoozed/` and return the next morning.
+Agents write files in, Station reads them out. Dismissed items move to `archived/`, snoozed items move to `snoozed/` and return the next morning, and answers to interactive cards land in `responses/`. Renaming or deleting a tab rewrites the `category` on the cards it held, so a tab change never strands a card.
+
+Everything lives in plain files you can read, move or delete yourself. There is no database and nothing leaves your machine.
 
 ---
 

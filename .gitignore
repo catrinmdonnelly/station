@@ -1,9 +1,13 @@
 # Dependencies
 node_modules/
 
-# Internal working files
+# Internal working files. REQUIREMENTS.md holds an audit of my own machine,
+# so it must never be published.
 CONTEXT.md
 PLANNING.md
+REQUIREMENTS.md
+design/
+archive/
 
 # Electron build output
 dist/
