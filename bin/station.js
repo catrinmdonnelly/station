@@ -2,7 +2,7 @@
 
 const { startServer } = require('../server.js');
 const { seedWelcome } = require('../welcome.js');
-const { execSync, exec } = require('child_process');
+const { execFile } = require('child_process');
 const os = require('os');
 const fs = require('fs');
 const path = require('path');
@@ -55,10 +55,11 @@ startServer(config, () => {
   console.log(`  Inbox: ${config.inbox}\n`);
 
   if (!noOpen) {
-    // Open browser
+    // Open browser. execFile so the port from config cannot smuggle in a
+    // shell command through the URL.
     const platform = process.platform;
-    if (platform === 'darwin')  exec(`open ${url}`);
-    else if (platform === 'win32') exec(`start ${url}`);
-    else exec(`xdg-open ${url}`);
+    if (platform === 'darwin')       execFile('open', [url], () => {});
+    else if (platform === 'win32')   execFile('cmd', ['/c', 'start', '', url], () => {});
+    else                             execFile('xdg-open', [url], () => {});
   }
 });

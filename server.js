@@ -4,7 +4,7 @@ const http = require('http');
 const fs   = require('fs');
 const path = require('path');
 const os   = require('os');
-const { exec } = require('child_process');
+const { execFile } = require('child_process');
 
 // ── Data ───────────────────────────────────────────────────────────────────
 
@@ -1209,7 +1209,11 @@ function startServer(config, onReady) {
             ? briefPath
             : path.join(workspace, briefPath);
           if (fs.existsSync(resolved)) {
-            exec(`open "${resolved}" || open -t "${resolved}"`);
+            // execFile, not exec: the path comes from a card, and building a
+            // shell string out of it would let a filename carry commands.
+            execFile('open', [resolved], err => {
+              if (err) execFile('open', ['-t', resolved], () => {});
+            });
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ ok: true }));
           } else {
